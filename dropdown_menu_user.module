@@ -7,14 +7,14 @@
 /**
  * Implementation of hook_menu().
  */
-function welcome_user_menu() {
+function dropdown_menu_user_menu() {
 
   $items = array();
 
-  $items['admin/settings/welcome_user'] = array(
+  $items['admin/settings/dropdown_menu_user'] = array(
     'title' => 'Welcome User Settings',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('welcome_user_admin'),
+    'page arguments' => array('dropdown_menu_user_admin'),
     'access arguments' => array('administrator content'),
   );
 
@@ -22,13 +22,13 @@ function welcome_user_menu() {
 }
 
 /** implementing the new user login block */
-function welcome_user_block($op = 'list', $delta = 0) {
+function dropdown_menu_user_block($op = 'list', $delta = 0) {
   if ($op == 'list') {
     $blocks[0]['info'] = t("Welcome User Block");
     return $blocks;
   }
   elseif ($op == 'view') {
-    $block['content'] = theme('welcome_user');
+    $block['content'] = theme('dropdown_menu_user');
     return $block;
   }
 }
@@ -36,18 +36,18 @@ function welcome_user_block($op = 'list', $delta = 0) {
 /**
  * Implementation of hook_theme()...
  */
-function welcome_user_theme() {
+function dropdown_menu_user_theme() {
   return array(
-    'welcome_user' => array('arguments' => array()),
+    'dropdown_menu_user' => array('arguments' => array()),
   );
 }
 
 /**
  * Theming function for messages.
  */
-function theme_welcome_user() {
-  drupal_add_css(drupal_get_path('module', 'welcome_user') . '/welcome_user.css');
-  drupal_add_js(drupal_get_path('module', 'welcome_user') . '/welcome_user.js');
+function theme_dropdown_menu_user() {
+  drupal_add_css(drupal_get_path('module', 'dropdown_menu_user') . '/dropdown_menu_user.css');
+  drupal_add_js(drupal_get_path('module', 'dropdown_menu_user') . '/dropdown_menu_user.js');
   global $user;
   global $language;
   $output = '';
@@ -71,7 +71,7 @@ function theme_welcome_user() {
     $output .= $img_user_link;
     $output .= '<div class="user-info">' . $user->name . ' <span class="triangle-info"></span></div>';
     //Get the menu items :
-    $items = _welcome_user_get_menu_items($user);
+    $items = _dropdown_menu_user_get_menu_items($user);
     $output .= theme('item_list', $items);
   }
 
@@ -80,7 +80,7 @@ function theme_welcome_user() {
   return $output;
 }
 
-function _welcome_user_get_menu_items($user) {
+function _dropdown_menu_user_get_menu_items($user) {
 
   /* Secciones: VER MIS DATOS , EDITAR MIS DATOS , MIS MEDALLAS 
    *  USUARIO REGISTRADO
@@ -106,7 +106,7 @@ function _welcome_user_get_menu_items($user) {
   array_push($items, l(t('My ask & questions'), 'user/' . $user->uid . '/my-questions-and-answers', array('title' => t('My ask & questions'))));
 
   // Obtenemos si tiene los roles de joven_propietario , joven colaborador ,colaborador_principal o mentor en algun proyecto:,
-  $roles = welcome_user_get_max_roles_og($user);
+  $roles = dropdown_menu_user_get_max_roles_og($user);
 
   // NO HAY ENLACE A MIS CURSOS:
   /* if ($roles['young_owner']) {
@@ -163,7 +163,7 @@ function _welcome_user_get_menu_items($user) {
  * @param type $user
  * @return type
  */
-function welcome_user_get_max_roles_og($user) {
+function dropdown_menu_user_get_max_roles_og($user) {
   // Inicializamos el array de roles
   $max_roles = array(
     'young_owner' => FALSE, // Joven propietario:
@@ -223,7 +223,7 @@ function welcome_user_get_max_roles_og($user) {
   return $max_roles;
 }
 
-function welcome_user_form_alter(&$form, $form_state, $form_id) {
+function dropdown_menu_user_form_alter(&$form, $form_state, $form_id) {
   global $form_values;
   switch ($form_id) {
     case 'user_login_block':
@@ -244,7 +244,7 @@ function welcome_user_form_alter(&$form, $form_state, $form_id) {
   }
 }
 
-function welcome_user_admin() {
+function dropdown_menu_user_admin() {
   $form['text'] = array(
     '#type' => 'fieldset',
     '#title' => t('Welcome User Settings'),

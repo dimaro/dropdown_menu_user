@@ -1,7 +1,7 @@
-name = Welcome User
+name = Dropdown menu user
 description = Module that provides a new straight user login bar block
 dependencies[] = "content_profile"
 package = Welcome User
 version = "6.x-1.x"
 core = "6.x"
-project = "welcome_user"
+project = "dropdown_menu_user"
