@@ -1,0 +1,261 @@
+<?php
+
+/*
+ * Welcome User is a module written by Nesta. This module creates a button access user login block.
+ */
+
+/**
+ * Implementation of hook_menu().
+ */
+function welcome_user_menu() {
+
+  $items = array();
+
+  $items['admin/settings/welcome_user'] = array(
+    'title' => 'Welcome User Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('welcome_user_admin'),
+    'access arguments' => array('administrator content'),
+  );
+
+  return $items;
+}
+
+/** implementing the new user login block */
+function welcome_user_block($op = 'list', $delta = 0) {
+  if ($op == 'list') {
+    $blocks[0]['info'] = t("Welcome User Block");
+    return $blocks;
+  }
+  elseif ($op == 'view') {
+    $block['content'] = theme('welcome_user');
+    return $block;
+  }
+}
+
+/**
+ * Implementation of hook_theme()...
+ */
+function welcome_user_theme() {
+  return array(
+    'welcome_user' => array('arguments' => array()),
+  );
+}
+
+/**
+ * Theming function for messages.
+ */
+function theme_welcome_user() {
+  drupal_add_css(drupal_get_path('module', 'welcome_user') . '/welcome_user.css');
+  drupal_add_js(drupal_get_path('module', 'welcome_user') . '/welcome_user.js');
+  global $user;
+  global $language;
+  $output = '';
+
+  if (arg(0) == "user" && !is_numeric(arg(1))) {
+
+    return;
+  }
+  if (!$user->uid) {
+    $output .= drupal_get_form('user_login_block');
+  }
+  else if (!variable_get('disable_welcome_box', FALSE)) {
+    $profile = content_profile_load('profile', $user->uid, $language->language);
+    if ($profile->field_picture[0]['fid'] == '') {
+      $field = content_fields('field_picture', 'profile');
+      $img_user_link = theme('imagecache', 'tb_avatar_72px_72px', $field['widget']['default_image']['filepath']);
+    }
+    else {
+      $img_user_link = theme('imagecache', 'tb_avatar_72px_72px', $profile->field_picture[0]['filepath']);
+    }
+    $output .= $img_user_link;
+    $output .= '<div class="user-info">' . $user->name . ' <span class="triangle-info"></span></div>';
+    //Get the menu items :
+    $items = _welcome_user_get_menu_items($user);
+    $output .= theme('item_list', $items);
+  }
+
+  $output = '<div class="acces-user-login">' . t("Access") . '</div>' . '<div id="user-login-form">' . $output . '</div>';
+
+  return $output;
+}
+
+function _welcome_user_get_menu_items($user) {
+
+  /* Secciones: VER MIS DATOS , EDITAR MIS DATOS , MIS MEDALLAS 
+   *  USUARIO REGISTRADO
+   */
+  $items = array(
+    l(t('See my data'), 'user/' . $user->uid . '/see-my-data', array('title' => t('See my data'))),
+    l(t('Edit my data'), 'user/' . $user->uid . '/my-data', array('title' => t('Edit my data'))),
+    l(t('My badges'), 'user/' . $user->uid . '/achievements', array('title' => t('My badges')))
+  );
+
+  /* Seccion: Amplia tu proyecto:
+   *  USUARIO CON PERMISO A ACCEDER A LA SECCION:
+   */
+  if (function_exists('tb_section_submit_thinkbigger_form_access_callback')) {
+    if (tb_section_submit_thinkbigger_form_access_callback($user)) {
+      array_push($items, l(t('Expand your project'), 'user/' . $user->uid . '/submit-thinkbigger-form', array('title' => t('Expand your project'))));
+    }
+  }
+  
+  /* Seccion: MIS PREGUNTAS Y RESPUESTAS
+   *  USUARIO REGISTRADO
+   */
+  array_push($items, l(t('My ask & questions'), 'user/' . $user->uid . '/my-questions-and-answers', array('title' => t('My ask & questions'))));
+
+  // Obtenemos si tiene los roles de joven_propietario , joven colaborador ,colaborador_principal o mentor en algun proyecto:,
+  $roles = welcome_user_get_max_roles_og($user);
+
+  // NO HAY ENLACE A MIS CURSOS:
+  /* if ($roles['young_owner']) {
+    array_push($items, l(t('My courses'), 'user/' . $user->uid, array('title' => t('My courses'))));
+    } */
+
+  /* Seccion: MIS PROYECTOS
+   * Joven colaborador
+   * Mentor
+   */
+  if ($roles['mentor'] || $roles['young_partner']) {
+    array_push($items, l(t('My projects'), 'user/' . $user->uid . '/my-projects', array('title' => t('My projects'))));
+  }
+
+  /* Seccion: MI PROYECTO
+   * Joven Propietario   
+   */
+  if ($roles['young_owner']) {
+    array_push($items, l(t('My project'), 'user/' . $user->uid . '/my-project', array('title' => t('My project'))));
+  }
+
+  /* Seccion: MI IDEA
+   * JOVEN CON IDEA SELECCIONADA : En esta parte todavia no hay proyectos, por eso no es joven propietario todavia
+   */
+  if (array_key_exists('young_idea_selected', $roles) && $roles['young_idea_selected']) {
+    array_push($items, l(t('My idea'), 'user/' . $user->uid . '/my-idea', array('title' => t('My idea'))));
+  }
+
+  /* Seccion: MI EQUIPO
+   * Joven propietario   
+   */
+  if (array_key_exists('young_owner', $roles) && $roles['young_owner']) {
+    array_push($items, l(t('My team'), 'user/' . $user->uid . '/my-team', array('title' => t('My team'))));
+  }
+
+  /* Seccion: CENTRO DE CONTROL
+   *  PERMISO control center score card
+   */
+  if (user_access('control center score card')) {
+    array_push($items, l(t('Control center'), 'admin/control-center', array('title' => t('Control center'))));
+  }
+
+  /* Opcion de SALIR
+   *  USUARIO REGISTRADO
+   */
+  array_push($items, l(t('Sign out'), 'logout'));
+
+  //Return the items  
+  return $items;
+}
+
+/**
+ * Return an array with the max roles of a user , this is based in OG.
+ * @param type $user
+ * @return type
+ */
+function welcome_user_get_max_roles_og($user) {
+  // Inicializamos el array de roles
+  $max_roles = array(
+    'young_owner' => FALSE, // Joven propietario:
+    'young_partner' => FALSE, // Joven colaborador
+    'young_main_partner' => FALSE, // Joven colaborador principal.
+    'mentor' => FALSE, // Mentor
+  );
+  // Obetenemos los roles y projectos en lo que esta el usuario logado:
+  $query = "SELECT
+                      ou.uid AS uid,
+                      ou.nid AS proj_nid,
+                      ou.is_admin AS is_admin,
+                      our.rid AS role
+                    FROM og_uid ou
+                    INNER JOIN og_users_roles our ON our.uid = ou.uid
+                    WHERE ou.uid = %d 
+                      AND ou.is_active = 1 ";
+
+  $result = db_query($query, $user->uid);
+
+  while ($row = db_fetch_array($result)) {
+
+    // Joven Propietario:
+    if ($row['role'] == 5 && !$max_roles['young_owner']) {
+      $max_roles['young_owner'] = TRUE;
+    }
+
+    // Joven colaborador:
+    if ($row['role'] == 12 && !$max_roles['young_partner']) {
+      $max_roles['young_partner'] = TRUE;
+    }
+
+    // Joven colaborador principal:
+    if ($row['role'] == 11 && !$max_roles['young_main_partner']) {
+      $max_roles['young_main_partner'] = TRUE;
+    }
+
+    // Mentor: 
+    if ($row['role'] == 6 && !$max_roles['mentor']) {
+      $max_roles['mentor'] = TRUE;
+    }
+  }
+
+  // If projects is no actived, we check that this user have a idea at 'selected' status.
+  if (!$max_roles['young_owner']) {
+    $sql = "SELECT cti.nid
+                      FROM node n
+                        INNER JOIN content_type_idea cti ON n.vid = cti.vid
+                      WHERE n.uid = %d 
+                        AND cti.field_preselection_status_value = 7";
+    $result = db_query($sql, $user->uid);
+    if ($row = db_fetch_array($result)) {
+      $max_roles['young_idea_selected'] = TRUE;
+    }
+  }
+
+  return $max_roles;
+}
+
+function welcome_user_form_alter(&$form, $form_state, $form_id) {
+  global $form_values;
+  switch ($form_id) {
+    case 'user_login_block':
+      $form['#action'] = '?q=user';
+      $form['#method'] = 'post';
+      $form['form_id'] = array(
+        '#type' => 'hidden',
+        '#default_value' => 'user_login',
+      );
+      $items = array();
+      if (variable_get('user_register', 1)) {
+        $items[] = l(t('Register'), 'user/register', array('title' => t('Create a new user account.'))) . ' | &nbsp;';
+      }
+      $items[] = l(t('Forgot Password?'), 'user/password', array('title' => t('Request new password via e-mail.')));
+
+      $form['links'] = array('#value' => theme('item_list', $items));
+      break;
+  }
+}
+
+function welcome_user_admin() {
+  $form['text'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Welcome User Settings'),
+  );
+
+  $form['text']['disable_welcome_box'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Check this box, if you want to disable welcome box when the user logs in!'),
+    '#default_value' => variable_get('disable_welcome_box', FALSE),
+  );
+
+  return system_settings_form($form);
+}
+
