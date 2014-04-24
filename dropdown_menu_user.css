@@ -35,12 +35,12 @@ by default, the default form adds some surrounding space, this cancels it
   padding-top: 20px;
 }
 
-.not-logged-in .block-welcome_user form#user-login-form{
+.not-logged-in .block-dropdown_menu_user form#user-login-form{
   position: absolute;
   top: -5px;
   background: url(images/bg_bloq_lateral_teaser.png) no-repeat 0 0;
 }
-.block-welcome_user #user-login-form #edit-pass-wrapper{
+.block-dropdown_menu_user #user-login-form #edit-pass-wrapper{
   margin-top: 10px;
 }
 
