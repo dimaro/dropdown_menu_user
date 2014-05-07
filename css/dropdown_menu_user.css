@@ -1,0 +1,52 @@
+/**
+ * CSS for Dropdown menu user module.
+ */
+
+/*
+ * User
+ */
+.user {
+  overflow: hidden;
+  cursor: pointer;
+}
+
+  /* User image */
+  .user-image {
+    float: left;
+  }
+
+  .user-image img {
+    vertical-align: middle;
+  }
+
+  /* User label */
+  .user-name {
+    float: right;
+    padding: 1px 6px;
+    line-height: 30px;
+    text-shadow: 1px 1px 1px #000;
+  }
+
+
+/* Menu items */
+.block-header {
+  cursor: pointer;
+  padding: 5px 8px;
+  font-weight: bold;
+}
+
+.block-body {
+  position: absolute;
+  z-index: 1;
+  padding: 5px 8px;
+  min-width: 130px;
+}
+
+.block-body ul li a {
+  padding: 0px 6px;
+  text-shadow: 1px 1px 1px #000;
+}
+
+#edit-actions {
+  text-align: center;
+}

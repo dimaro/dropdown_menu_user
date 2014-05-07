@@ -128,7 +128,7 @@ function dropdown_menu_user_block_view($delta = '') {
       break;
   }
 
-  return $block;
+    return $block;
 }
 
 /**
@@ -143,7 +143,6 @@ function dropdown_menu_user_login_block_view(&$block) {
     $account = user_load($user->uid);
     $image_style = variable_get('dropdown_menu_user_image_style', 'avatar');
     $image_path = variable_get('user_picture_default', '');
-    $image_render = '';
     if ((isset($account->picture->uri)) || !empty($image_path)) {
       $image_render = theme('image_style', array(
           'style_name' => $image_style,
@@ -213,4 +212,3 @@ function dropdown_menu_user_form_alter(&$form, &$form_state, $form_id) {
       break;
   }
 }
-
